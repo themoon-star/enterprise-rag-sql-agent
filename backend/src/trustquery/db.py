@@ -38,6 +38,7 @@ async def get_session(request: Request) -> AsyncIterator[AsyncSession]:
 
     async with request.app.state.database.sessions() as session:
         session.info["credential_encryption_key"] = request.app.state.settings.credential_encryption_key
+        session.info["rag_answer_generator"] = request.app.state.rag_answer_generator
         session.info["sql_generator"] = request.app.state.sql_generator
         session.info["sql_executor"] = request.app.state.sql_executor
         yield session

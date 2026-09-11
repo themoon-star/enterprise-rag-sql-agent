@@ -95,7 +95,10 @@ async def query_knowledge(
 ) -> RagQueryOutput:
     """在可信租户和角色边界内执行知识问答。"""
 
-    result = await RagService(DocumentRepository(session)).query(
+    result = await RagService(
+        DocumentRepository(session),
+        answer_generator=session.info["rag_answer_generator"],
+    ).query(
         context,
         payload.question,
         top_k=payload.top_k,

@@ -4,6 +4,12 @@ import re
 from dataclasses import dataclass
 
 from trustquery.rag.bm25 import rank, tokenize
+from trustquery.rag.generator import (
+    AnswerEvidence,
+    AnswerGenerationError,
+    ExtractiveAnswerGenerator,
+    RagAnswerGenerator,
+)
 from trustquery.repositories import DocumentRecord, DocumentRepository
 from trustquery.security import TenantContext
 
@@ -56,9 +62,16 @@ class RagResult:
 class RagService:
     """只在可访问知识范围内检索并生成证据化回答。"""
 
-    def __init__(self, repository: DocumentRepository, *, minimum_score: float = 0.2) -> None:
+    def __init__(
+        self,
+        repository: DocumentRepository,
+        *,
+        minimum_score: float = 0.2,
+        answer_generator: RagAnswerGenerator | None = None,
+    ) -> None:
         self.repository = repository
         self.minimum_score = minimum_score
+        self.answer_generator = answer_generator or ExtractiveAnswerGenerator()
 
     async def query(self, context: TenantContext, question: str, *, top_k: int = 3) -> RagResult:
         """执行 ACL 过滤、BM25 排序与证据化回答。"""
@@ -91,10 +104,23 @@ class RagService:
         citations = tuple(
             self._citation(documents[item.index], item.score, normalized_question) for item in accepted
         )
-        primary = citations[0]
+        evidence = tuple(
+            AnswerEvidence(title=item.title, excerpt=item.excerpt, source_uri=item.source_uri)
+            for item in citations
+        )
+        try:
+            answer = await self.answer_generator.generate(normalized_question, evidence)
+        except AnswerGenerationError:
+            return RagResult(
+                status="failed",
+                answer="模型生成暂时不可用，请稍后重试。",
+                citations=citations,
+                trace=RetrievalTrace(len(documents), len(ranked), "answer_generation_failed"),
+            )
+
         return RagResult(
             status="answered",
-            answer=f"根据《{primary.title}》：{primary.excerpt}",
+            answer=answer,
             citations=citations,
             trace=RetrievalTrace(len(documents), len(ranked), "evidence_found"),
         )

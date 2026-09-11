@@ -1,8 +1,9 @@
 """应用配置。"""
 
 from functools import lru_cache
+from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,9 +18,21 @@ class Settings(BaseSettings):
     auto_create_schema: bool = Field(default=True, alias="APP_AUTO_CREATE_SCHEMA")
     demo_mode: bool = Field(default=False, alias="APP_DEMO_MODE")
     demo_datasource_url: SecretStr | None = Field(default=None, alias="APP_DEMO_DATASOURCE_URL")
+    llm_mode: Literal["deterministic", "openai"] = Field(default="deterministic", alias="LLM_MODE")
+    llm_base_url: str = Field(default="https://api.openai.com/v1", alias="LLM_BASE_URL")
+    llm_api_key: SecretStr | None = Field(default=None, alias="LLM_API_KEY")
+    llm_model: str | None = Field(default=None, alias="LLM_MODEL")
     jwt_issuer: str = "trustquery"
     jwt_audience: str = "trustquery-api"
     access_token_minutes: int = 60
+
+    @model_validator(mode="after")
+    def validate_model_configuration(self) -> "Settings":
+        """启用在线模型时要求完整配置，避免静默降级。"""
+
+        if self.llm_mode == "openai" and (self.llm_api_key is None or not self.llm_model):
+            raise ValueError("LLM_MODE=openai 时必须配置 LLM_API_KEY 和 LLM_MODEL")
+        return self
 
 
 @lru_cache

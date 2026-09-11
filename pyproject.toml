@@ -21,13 +21,6 @@ dependencies = [
   "uvicorn[standard]>=0.35.0",
 ]
 
-[project.optional-dependencies]
-dev = [
-  "pytest>=8.4.0",
-  "pytest-asyncio>=1.1.0",
-  "ruff>=0.12.0",
-]
-
 [tool.setuptools.packages.find]
 where = ["backend/src"]
 
@@ -39,6 +32,9 @@ pythonpath = ["backend/src"]
 markers = [
   "integration: requires a real PostgreSQL service",
   "evaluation: runs a fixed acceptance dataset",
+]
+filterwarnings = [
+  "ignore:The anyio.abc.BlockingPortal alias is deprecated.*:DeprecationWarning:starlette.testclient",
 ]
 
 [tool.ruff]
@@ -52,3 +48,10 @@ ignore = ["S101"]
 [tool.ruff.lint.per-file-ignores]
 "backend/tests/**/*.py" = ["S105", "S106"]
 
+[dependency-groups]
+dev = [
+  "httpx2>=2.12.0",
+  "pytest>=8.4.0",
+  "pytest-asyncio>=1.1.0",
+  "ruff>=0.12.0",
+]

@@ -1,8 +1,11 @@
-"""Text-to-SQL 候选生成接口与可复现规则生成器。"""
+"""Text-to-SQL 候选生成接口、在线适配器与可复现规则生成器。"""
 
+import json
 from typing import Protocol
 
 from sqlglot import exp
+
+from trustquery.llm import ModelAdapterError, OpenAICompatibleClient
 
 
 class SqlGenerationError(RuntimeError):
@@ -96,3 +99,68 @@ class DeterministicSqlGenerator:
         """通过 AST 构造只引用已探测标识符的 PostgreSQL 查询。"""
 
         return exp.select(*expressions).from_(exp.to_table(table)).sql(dialect="postgres")
+
+
+class OpenAISqlGenerator:
+    """通过 OpenAI-compatible 接口生成 SQL 候选，安全性仍由生产验证器决定。"""
+
+    def __init__(self, client: OpenAICompatibleClient) -> None:
+        self.client = client
+
+    async def generate(self, question: str, schema: dict[str, tuple[str, ...]]) -> str:
+        """仅向模型暴露当前租户数据源的授权 schema。"""
+
+        return await self._complete(
+            question=question,
+            schema=schema,
+            repair_context=None,
+        )
+
+    async def repair(
+        self,
+        question: str,
+        schema: dict[str, tuple[str, ...]],
+        failed_sql: str,
+        error_code: str,
+    ) -> str:
+        """基于脱敏错误类型生成一次新候选，不绕过后续完整校验。"""
+
+        return await self._complete(
+            question=question,
+            schema=schema,
+            repair_context={"failed_sql": failed_sql, "error_code": error_code},
+        )
+
+    async def _complete(
+        self,
+        *,
+        question: str,
+        schema: dict[str, tuple[str, ...]],
+        repair_context: dict[str, str] | None,
+    ) -> str:
+        if not schema:
+            raise SqlGenerationError("数据源没有可用的授权表")
+
+        prompt = {
+            "question": question,
+            "authorized_schema": {table: list(columns) for table, columns in schema.items()},
+        }
+        if repair_context is not None:
+            prompt["repair_context"] = repair_context
+
+        try:
+            payload = await self.client.complete_json(
+                system_prompt=(
+                    "你是 PostgreSQL 查询规划器。只生成一个只读 SELECT 或 WITH 查询；"
+                    "只能引用 authorized_schema 中的表和列，不得使用注释或多语句。"
+                    "返回 JSON 对象，唯一字段为 sql。"
+                ),
+                user_prompt=json.dumps(prompt, ensure_ascii=False),
+            )
+        except ModelAdapterError as error:
+            raise SqlGenerationError("SQL 模型调用失败") from error
+
+        sql = payload.get("sql")
+        if not isinstance(sql, str) or not sql.strip():
+            raise SqlGenerationError("SQL 模型缺少 sql 字段")
+        return sql.strip()

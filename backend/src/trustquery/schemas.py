@@ -51,7 +51,7 @@ class TraceOutput(BaseModel):
 class RagQueryOutput(BaseModel):
     """RAG 回答、拒答或澄清结果。"""
 
-    status: Literal["answered", "refused", "clarification"]
+    status: Literal["answered", "refused", "clarification", "failed"]
     answer: str
     citations: list[CitationOutput]
     trace: TraceOutput

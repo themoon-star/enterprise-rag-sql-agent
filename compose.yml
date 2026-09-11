@@ -39,6 +39,10 @@ services:
       APP_CREDENTIAL_ENCRYPTION_KEY: ${APP_CREDENTIAL_ENCRYPTION_KEY:?set APP_CREDENTIAL_ENCRYPTION_KEY}
       APP_DEMO_MODE: "true"
       APP_DEMO_DATASOURCE_URL: postgresql://trustquery_reader:${ANALYTICS_READONLY_PASSWORD}@analytics-db:5432/analytics
+      LLM_MODE: ${LLM_MODE:-deterministic}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
     ports:
       - "${API_PORT:-8100}:8000"
     depends_on:
