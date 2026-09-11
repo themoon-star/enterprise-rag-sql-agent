@@ -4,6 +4,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 from trustquery.app import create_app
 from trustquery.config import Settings
@@ -15,6 +16,7 @@ def settings(tmp_path: Path) -> Settings:
     return Settings(
         database_url=f"sqlite+aiosqlite:///{tmp_path / 'test.db'}",
         secret_key="integration-test-secret-key-with-32-characters",
+        credential_encryption_key=Fernet.generate_key().decode(),
     )
 
 

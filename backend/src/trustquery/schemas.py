@@ -1,8 +1,11 @@
 """HTTP API 的输入输出模型。"""
 
-from typing import Literal
+import re
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr, field_validator
+
+IDENTIFIER_PATTERN = re.compile(r"^[a-z_][a-z0-9_]*$")
 
 
 class DocumentCreate(BaseModel):
@@ -52,3 +55,53 @@ class RagQueryOutput(BaseModel):
     answer: str
     citations: list[CitationOutput]
     trace: TraceOutput
+
+
+class DatasourceCreate(BaseModel):
+    """创建只读 PostgreSQL 数据源的请求。"""
+
+    name: str = Field(min_length=1, max_length=120)
+    database_url: SecretStr
+    allowed_tables: list[str] = Field(min_length=1, max_length=50)
+    row_limit: int = Field(default=200, ge=1, le=1_000)
+    statement_timeout_ms: int = Field(default=3_000, ge=100, le=30_000)
+
+    @field_validator("allowed_tables")
+    @classmethod
+    def validate_allowed_tables(cls, tables: list[str]) -> list[str]:
+        """限制表名为不含 schema 或表达式的 PostgreSQL 标识符。"""
+
+        normalized = [table.lower() for table in tables]
+        if any(not IDENTIFIER_PATTERN.fullmatch(table) for table in normalized):
+            raise ValueError("表名只能包含小写字母、数字和下划线")
+        return sorted(set(normalized))
+
+
+class DatasourceOutput(BaseModel):
+    """不返回连接串或密文的数据源摘要。"""
+
+    id: str
+    name: str
+    dialect: Literal["postgresql"] = "postgresql"
+    allowed_tables: list[str]
+    row_limit: int
+    statement_timeout_ms: int
+
+
+class SqlQueryInput(BaseModel):
+    """自然语言问数请求。"""
+
+    datasource_id: str = Field(min_length=1, max_length=64)
+    question: str = Field(min_length=2, max_length=2_000)
+
+
+class SqlQueryOutput(BaseModel):
+    """安全问数结果与可检查决策状态。"""
+
+    status: Literal["succeeded", "blocked", "failed"]
+    sql: str | None
+    repaired: bool
+    execution_attempts: int
+    columns: list[str]
+    rows: list[dict[str, Any]]
+    decision: str

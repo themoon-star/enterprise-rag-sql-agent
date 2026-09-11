@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import JSON, DateTime, ForeignKey, String, Text
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from trustquery.db import Base
@@ -35,4 +35,19 @@ class KnowledgeDocument(Base):
     content: Mapped[str] = mapped_column(Text)
     source_uri: Mapped[str] = mapped_column(String(500), default="internal://manual")
     allowed_roles: Mapped[list[str]] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+
+
+class Datasource(Base):
+    """加密保存凭证的租户只读 PostgreSQL 数据源。"""
+
+    __tablename__ = "datasources"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    tenant_id: Mapped[str] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    encrypted_url: Mapped[str] = mapped_column(Text)
+    allowed_tables: Mapped[list[str]] = mapped_column(JSON)
+    row_limit: Mapped[int] = mapped_column(Integer, default=200)
+    statement_timeout_ms: Mapped[int] = mapped_column(Integer, default=3_000)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))

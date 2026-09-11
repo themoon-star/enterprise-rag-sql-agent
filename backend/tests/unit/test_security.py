@@ -3,6 +3,7 @@
 from datetime import timedelta
 
 import pytest
+from cryptography.fernet import Fernet
 from trustquery.config import Settings
 from trustquery.security import create_access_token, decode_access_token
 
@@ -11,6 +12,7 @@ def make_settings() -> Settings:
     return Settings(
         database_url="sqlite+aiosqlite:///:memory:",
         secret_key="unit-test-secret-key-with-32-characters",
+        credential_encryption_key=Fernet.generate_key().decode(),
     )
 
 

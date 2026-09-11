@@ -37,4 +37,7 @@ async def get_session(request: Request) -> AsyncIterator[AsyncSession]:
     """为单个请求提供数据库事务会话。"""
 
     async with request.app.state.database.sessions() as session:
+        session.info["credential_encryption_key"] = request.app.state.settings.credential_encryption_key
+        session.info["sql_generator"] = request.app.state.sql_generator
+        session.info["sql_executor"] = request.app.state.sql_executor
         yield session

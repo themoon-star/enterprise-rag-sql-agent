@@ -5,11 +5,22 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from trustquery.datasources import CredentialCipher, DatasourceRecord, DatasourceRepository
 from trustquery.db import get_session
 from trustquery.rag.service import RagService
 from trustquery.repositories import DocumentRecord, DocumentRepository
-from trustquery.schemas import DocumentCreate, DocumentOutput, RagQueryInput, RagQueryOutput
+from trustquery.schemas import (
+    DatasourceCreate,
+    DatasourceOutput,
+    DocumentCreate,
+    DocumentOutput,
+    RagQueryInput,
+    RagQueryOutput,
+    SqlQueryInput,
+    SqlQueryOutput,
+)
 from trustquery.security import TenantContext, get_tenant_context, require_roles
+from trustquery.sql.service import TextToSqlService
 
 router = APIRouter(prefix="/api")
 
@@ -22,6 +33,20 @@ def _document_output(document: DocumentRecord) -> DocumentOutput:
         source_uri=document.source_uri,
         allowed_roles=sorted(document.allowed_roles),
     )
+
+
+def _datasource_output(datasource: DatasourceRecord) -> DatasourceOutput:
+    return DatasourceOutput(
+        id=datasource.id,
+        name=datasource.name,
+        allowed_tables=sorted(datasource.allowed_tables),
+        row_limit=datasource.row_limit,
+        statement_timeout_ms=datasource.statement_timeout_ms,
+    )
+
+
+def _datasource_repository(session: AsyncSession, key: str) -> DatasourceRepository:
+    return DatasourceRepository(session, CredentialCipher(key))
 
 
 @router.post("/documents", response_model=DocumentOutput, status_code=status.HTTP_201_CREATED)
@@ -64,3 +89,51 @@ async def query_knowledge(
         top_k=payload.top_k,
     )
     return RagQueryOutput.model_validate(result, from_attributes=True)
+
+
+@router.post("/datasources", response_model=DatasourceOutput, status_code=status.HTTP_201_CREATED)
+async def create_datasource(
+    payload: DatasourceCreate,
+    context: Annotated[TenantContext, Depends(require_roles("admin"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> DatasourceOutput:
+    """加密保存当前租户的只读 PostgreSQL 数据源。"""
+
+    repository = _datasource_repository(session, session.info["credential_encryption_key"])
+    datasource = await repository.create(
+        context,
+        **payload.model_dump(exclude={"database_url"}),
+        database_url=payload.database_url.get_secret_value(),
+    )
+    return _datasource_output(datasource)
+
+
+@router.get("/datasources", response_model=list[DatasourceOutput])
+async def list_datasources(
+    context: Annotated[TenantContext, Depends(require_roles("admin", "analyst"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> list[DatasourceOutput]:
+    """列出当前租户可用于问数的数据源摘要。"""
+
+    repository = _datasource_repository(session, session.info["credential_encryption_key"])
+    return [_datasource_output(item) for item in await repository.list(context)]
+
+
+@router.post("/sql/query", response_model=SqlQueryOutput)
+async def query_datasource(
+    payload: SqlQueryInput,
+    context: Annotated[TenantContext, Depends(require_roles("admin", "analyst"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SqlQueryOutput:
+    """对当前租户的数据源执行安全自然语言问数。"""
+
+    repository = _datasource_repository(session, session.info["credential_encryption_key"])
+    datasource = await repository.get(context, payload.datasource_id)
+    if datasource is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="数据源不存在")
+
+    result = await TextToSqlService(
+        generator=session.info["sql_generator"],
+        executor=session.info["sql_executor"],
+    ).query(datasource, payload.question)
+    return SqlQueryOutput.model_validate(result, from_attributes=True)

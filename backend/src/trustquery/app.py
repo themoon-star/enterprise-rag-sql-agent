@@ -7,7 +7,10 @@ from fastapi import FastAPI
 
 from trustquery.api import router
 from trustquery.config import Settings, get_settings
+from trustquery.datasources import CredentialCipher
 from trustquery.db import Database
+from trustquery.sql.executor import PostgresExecutor
+from trustquery.sql.generator import DeterministicSqlGenerator
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -19,6 +22,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         database = Database(resolved_settings.database_url)
         app.state.settings = resolved_settings
         app.state.database = database
+        app.state.sql_generator = DeterministicSqlGenerator()
+        cipher = CredentialCipher(resolved_settings.credential_encryption_key)
+        app.state.sql_executor = PostgresExecutor(cipher)
         if resolved_settings.auto_create_schema:
             await database.create_schema()
         yield

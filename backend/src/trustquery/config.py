@@ -13,6 +13,7 @@ class Settings(BaseSettings):
 
     database_url: str = Field(alias="APP_DATABASE_URL")
     secret_key: str = Field(min_length=32, alias="APP_SECRET_KEY")
+    credential_encryption_key: str = Field(alias="APP_CREDENTIAL_ENCRYPTION_KEY")
     auto_create_schema: bool = Field(default=True, alias="APP_AUTO_CREATE_SCHEMA")
     jwt_issuer: str = "trustquery"
     jwt_audience: str = "trustquery-api"

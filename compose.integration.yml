@@ -1,0 +1,17 @@
+services:
+  analytics-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: analytics
+      POSTGRES_USER: trustquery_admin
+      POSTGRES_PASSWORD: ${ANALYTICS_ADMIN_PASSWORD:?set ANALYTICS_ADMIN_PASSWORD}
+      READONLY_PASSWORD: ${ANALYTICS_READONLY_PASSWORD:?set ANALYTICS_READONLY_PASSWORD}
+    ports:
+      - "${ANALYTICS_PORT:-55439}:5432"
+    volumes:
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trustquery_admin -d analytics"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
