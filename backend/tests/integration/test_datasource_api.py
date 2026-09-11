@@ -17,7 +17,7 @@ from trustquery.security import create_access_token
 def settings(tmp_path: Path) -> Settings:
     return Settings(
         database_url=f"sqlite+aiosqlite:///{tmp_path / 'metadata.db'}",
-        secret_key="datasource-test-secret-key-with-32-characters",
+        secret_key="test-" + "d" * 40,
         credential_encryption_key=Fernet.generate_key().decode(),
     )
 
@@ -39,7 +39,7 @@ def create_datasource(client: TestClient, settings: Settings, tenant_id: str) ->
         headers=headers(settings, tenant_id),
         json={
             "name": "Sales Readonly",
-            "database_url": "postgresql://readonly_user:local-password@database:5432/analytics",
+            "database_url": f"postgresql://readonly_user:{'test-' + 'p' * 20}@database:5432/analytics",
             "allowed_tables": ["sales_orders"],
             "row_limit": 100,
             "statement_timeout_ms": 2000,
@@ -61,8 +61,8 @@ def test_datasource_response_and_storage_do_not_expose_plaintext_credentials(
 
     with sqlite3.connect(tmp_path / "metadata.db") as connection:
         encrypted_url = connection.execute("SELECT encrypted_url FROM datasources").fetchone()[0]
-    assert "local-password" not in encrypted_url
-    assert "local-password" in CredentialCipher(settings.credential_encryption_key).decrypt(encrypted_url)
+    assert "test-" + "p" * 20 not in encrypted_url
+    assert "test-" + "p" * 20 in CredentialCipher(settings.credential_encryption_key).decrypt(encrypted_url)
 
 
 def test_cross_tenant_datasource_is_not_listed_or_queryable(client: TestClient, settings: Settings) -> None:

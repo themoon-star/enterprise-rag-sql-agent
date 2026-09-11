@@ -11,7 +11,7 @@ from trustquery.config import Settings
 def settings(tmp_path: Path, *, demo_mode: bool) -> Settings:
     return Settings(
         database_url=f"sqlite+aiosqlite:///{tmp_path / 'demo.db'}",
-        secret_key="demo-api-test-secret-key-with-32-characters",
+        secret_key="test-" + "m" * 40,
         credential_encryption_key=Fernet.generate_key().decode(),
         demo_mode=demo_mode,
     )

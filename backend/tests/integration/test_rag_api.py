@@ -15,7 +15,7 @@ from trustquery.security import create_access_token
 def settings(tmp_path: Path) -> Settings:
     return Settings(
         database_url=f"sqlite+aiosqlite:///{tmp_path / 'test.db'}",
-        secret_key="integration-test-secret-key-with-32-characters",
+        secret_key="test-" + "r" * 40,
         credential_encryption_key=Fernet.generate_key().decode(),
     )
 

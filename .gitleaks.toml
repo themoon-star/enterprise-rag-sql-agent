@@ -1,0 +1,18 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Exact non-secret JWT fixture retained in the initial test commit"
+regexTarget = "match"
+regexes = ['''integration-test-secret-key-with-32-characters''']
+
+[[allowlists]]
+description = "Ignored local runtime, dependency and generated paths are not publication inputs"
+paths = [
+  '''(^|/)\.git/''',
+  '''(^|/)\.venv/''',
+  '''(^|/)frontend/node_modules/''',
+  '''(^|/)frontend/dist/''',
+  '''(^|/)reports/raw/''',
+  '''(^|/)\.env\.runtime$''',
+]

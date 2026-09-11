@@ -1,0 +1,61 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan committed secrets
+        run: docker run --rm -v "$PWD:/repo:ro" zricethezav/gitleaks:v8.28.0 detect --source=/repo --redact --no-banner
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Install Python dependencies
+        run: uv sync --frozen
+      - name: Lint backend and scripts
+        run: uv run ruff check backend scripts
+      - name: Audit Python dependencies
+        run: |
+          uv export --frozen --no-hashes --format requirements-txt --output-file /tmp/requirements.txt
+          uvx --from pip-audit pip-audit -r /tmp/requirements.txt
+      - name: Run unit and API tests
+        run: uv run pytest -q
+      - name: Run PostgreSQL executor integration
+        shell: pwsh
+        run: ./scripts/test-postgres.ps1
+      - name: Run fixed acceptance evaluations
+        shell: pwsh
+        run: ./scripts/run-evaluations.ps1
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high
+      - name: Lint frontend
+        run: npm run lint
+      - name: Type-check frontend
+        run: npm run typecheck
+      - name: Build production frontend
+        run: npm run build
