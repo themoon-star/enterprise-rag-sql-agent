@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "generated_at": "2026-09-11",
+  "files": {
+    "rag_v1/corpus.jsonl": {
+      "rows": 5,
+      "sha256": "5e2f2dfb4f7640cac022c6479d3e0ba7002785f685f97311cb6074ff438dfc7b"
+    },
+    "rag_v1/cases.jsonl": {
+      "rows": 100,
+      "sha256": "a0df40d55c9bd068233732146654f0bb6969af8fdd680532b03df47e9dd414ed"
+    },
+    "text_to_sql_v1/cases.jsonl": {
+      "rows": 50,
+      "sha256": "9385ea4a1b228ed7681850a9dbaea8d1c79c89790ef5d80282913f0c05e50d76"
+    }
+  }
+}

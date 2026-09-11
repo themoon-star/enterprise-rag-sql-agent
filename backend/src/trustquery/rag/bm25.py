@@ -9,14 +9,17 @@ TERM_PATTERN = re.compile(r"[a-zA-Z0-9_]+|[\u4e00-\u9fff]+")
 
 
 def tokenize(text: str) -> list[str]:
-    """将英文词、中文单字与中文二元词组转为统一检索词元。"""
+    """将英文词与中文二元词组转为统一检索词元。"""
 
     terms: list[str] = []
     for match in TERM_PATTERN.findall(text.lower()):
         if match.isascii():
             terms.append(match)
             continue
-        terms.extend(match)
+        if len(match) == 1:
+            terms.append(match)
+            continue
+        terms.append(match)
         terms.extend(match[index : index + 2] for index in range(len(match) - 1))
     return terms
 

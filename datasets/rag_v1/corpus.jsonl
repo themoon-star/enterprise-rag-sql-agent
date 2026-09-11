@@ -1,0 +1,5 @@
+{"allowed_roles": [], "content": "差旅报销需要电子发票、出差审批单和行程凭证。单笔住宿费超过八百元需要部门负责人追加审批。财务会在材料齐全后的五个工作日内完成审核。纸质发票遗失时应提交遗失说明。", "id": "travel-policy", "source_uri": "eval://finance/travel-v3", "tenant_id": "acme-demo", "title": "差旅报销制度"}
+{"allowed_roles": [], "content": "远程办公登录公司 VPN 时必须启用多因素认证。连续五次登录失败后账号锁定三十分钟。解锁可由员工在身份门户完成，异常设备需要安全团队复核。VPN 客户端每九十天更新一次。", "id": "remote-access", "source_uri": "eval://security/remote-access-v2", "tenant_id": "acme-demo", "title": "远程接入安全规范"}
+{"allowed_roles": [], "content": "员工申请年假应至少提前三个工作日提交。年假超过五天需要部门负责人审批。病假超过一天须补充医院证明。紧急事假可先口头报备并在次日补单。", "id": "leave-policy", "source_uri": "eval://hr/leave-v4", "tenant_id": "acme-demo", "title": "员工休假管理办法"}
+{"allowed_roles": ["analyst"], "content": "季度经营复盘使用只读分析库。营收目标为三百万元，回款率目标为百分之九十五。分析师需核对已支付订单、区域客户数量和异常订单。大客户名单仅在复盘会议中展示。", "id": "quarterly-review", "source_uri": "eval://finance/quarterly-review-v1", "tenant_id": "acme-demo", "title": "季度经营复盘说明"}
+{"allowed_roles": [], "content": "银杏并购项目预算为九千万元，交割日期为十二月十五日。", "id": "other-tenant-secret", "source_uri": "eval://secret/merger", "tenant_id": "other-corp", "title": "银杏并购预算"}

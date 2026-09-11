@@ -37,22 +37,25 @@ class DeterministicSqlGenerator:
         table = self._choose_table(question, schema)
         columns = schema[table]
         lowered_question = question.lower()
-        if any(keyword in lowered_question for keyword in ("数量", "多少", "count")):
-            count = exp.alias_(exp.Count(this=exp.Star()), "record_count")
-            return self._select(table, count)
-
         numeric_names = {"amount", "total_amount", "revenue", "price"}
         numeric_column = next(
             (column for column in columns if column.lower() in numeric_names),
             None,
         )
+        average_keywords = ("平均", "均值", "average")
+        if numeric_column and any(keyword in lowered_question for keyword in average_keywords):
+            average = exp.alias_(exp.Avg(this=exp.column(numeric_column)), "average_value")
+            return self._select(table, average)
+
         total_keywords = ("销售额", "营收", "总额", "金额")
         if numeric_column and any(keyword in lowered_question for keyword in total_keywords):
             total = exp.alias_(exp.Sum(this=exp.column(numeric_column)), "total_value")
             return self._select(table, total)
-        if numeric_column and any(keyword in lowered_question for keyword in ("平均", "均值", "average")):
-            average = exp.alias_(exp.Avg(this=exp.column(numeric_column)), "average_value")
-            return self._select(table, average)
+
+        count_keywords = ("数量", "多少", "count", "总数", "几条", "记录数", "数一下")
+        if any(keyword in lowered_question for keyword in count_keywords):
+            count = exp.alias_(exp.Count(this=exp.Star()), "record_count")
+            return self._select(table, count)
 
         selected_columns = [exp.column(column) for column in columns[:6]] or [exp.Star()]
         return self._select(table, *selected_columns)
@@ -72,7 +75,16 @@ class DeterministicSqlGenerator:
     @staticmethod
     def _choose_table(question: str, schema: dict[str, tuple[str, ...]]) -> str:
         lowered_question = question.lower()
-        mentioned = [table for table in schema if table.lower() in lowered_question]
+        table_aliases = {
+            "sales_orders": ("订单", "销售", "营收"),
+            "customers": ("客户",),
+        }
+        mentioned = [
+            table
+            for table in schema
+            if table.lower() in lowered_question
+            or any(alias in lowered_question for alias in table_aliases.get(table.lower(), ()))
+        ]
         if mentioned:
             return sorted(mentioned)[0]
         if len(schema) == 1:

@@ -1,0 +1,69 @@
+{
+  "version": "1.0.0",
+  "run_at": "2026-09-11T08:43:50.230249+00:00",
+  "mode": "deterministic_offline_with_real_postgresql",
+  "manifest_sha256": "0e02312fcfb0758fb72764bff1775d9c9ab9fa6c7f75bdf86f8bd479e6c1bca5",
+  "manifest": {
+    "version": "1.0.0",
+    "generated_at": "2026-09-11",
+    "files": {
+      "rag_v1/corpus.jsonl": {
+        "rows": 5,
+        "sha256": "5e2f2dfb4f7640cac022c6479d3e0ba7002785f685f97311cb6074ff438dfc7b"
+      },
+      "rag_v1/cases.jsonl": {
+        "rows": 100,
+        "sha256": "a0df40d55c9bd068233732146654f0bb6969af8fdd680532b03df47e9dd414ed"
+      },
+      "text_to_sql_v1/cases.jsonl": {
+        "rows": 50,
+        "sha256": "9385ea4a1b228ed7681850a9dbaea8d1c79c89790ef5d80282913f0c05e50d76"
+      }
+    }
+  },
+  "rag": {
+    "dataset": "rag_v1",
+    "cases": 100,
+    "case_mix": {
+      "answerable": 60,
+      "clarification": 10,
+      "cross_tenant": 5,
+      "out_of_domain": 15,
+      "role_blocked": 10
+    },
+    "metrics": {
+      "status_accuracy": 1.0,
+      "citation_accuracy_answerable": 1.0,
+      "grounded_term_accuracy_answerable": 1.0,
+      "cross_tenant_leakage_count": 0,
+      "latency_ms_p50": 0.929,
+      "latency_ms_p95": 1.53
+    },
+    "passed": true,
+    "failures": []
+  },
+  "text_to_sql": {
+    "dataset": "text_to_sql_v1",
+    "cases": 50,
+    "case_mix": {
+      "adversarial": 10,
+      "ambiguous": 5,
+      "customer_count": 7,
+      "order_count": 8,
+      "order_list": 5,
+      "sales_average": 7,
+      "sales_total": 8
+    },
+    "metrics": {
+      "status_accuracy": 1.0,
+      "execution_success_rate_expected_success": 1.0,
+      "result_accuracy_scored": 1.0,
+      "safety_pass_rate": 1.0,
+      "latency_ms_p50": 120.16,
+      "latency_ms_p95": 188.717
+    },
+    "passed": true,
+    "failures": []
+  },
+  "passed": true
+}

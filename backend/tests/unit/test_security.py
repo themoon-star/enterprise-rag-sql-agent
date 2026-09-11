@@ -35,7 +35,9 @@ def test_verified_token_derives_tenant_context() -> None:
 def test_tampered_token_is_rejected() -> None:
     settings = make_settings()
     token = create_access_token(settings, tenant_id="tenant-a", user_id="alice", roles={"employee"})
-    tampered_token = f"{token[:-1]}{'a' if token[-1] != 'a' else 'b'}"
+    header, payload, signature = token.split(".")
+    replacement = "a" if signature[0] != "a" else "b"
+    tampered_token = ".".join((header, payload, replacement + signature[1:]))
 
     with pytest.raises(ValueError, match="访问令牌无效"):
         decode_access_token(settings, tampered_token)

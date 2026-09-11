@@ -58,7 +58,10 @@ def test_missing_and_tampered_tokens_are_rejected(client: TestClient, settings: 
     assert client.post("/api/rag/query", json={"question": "差旅报销流程"}).status_code == 401
 
     headers = authorization(settings, "tenant-a", "employee")
-    headers["Authorization"] = f"{headers['Authorization'][:-1]}x"
+    prefix, token = headers["Authorization"].split(" ", maxsplit=1)
+    header, payload, signature = token.split(".")
+    replacement = "a" if signature[0] != "a" else "b"
+    headers["Authorization"] = f"{prefix} {header}.{payload}.{replacement}{signature[1:]}"
     assert (
         client.post("/api/rag/query", headers=headers, json={"question": "差旅报销流程"}).status_code == 401
     )
@@ -142,3 +145,22 @@ def test_short_question_requests_clarification(client: TestClient, settings: Set
     assert response.status_code == 200
     assert response.json()["status"] == "clarification"
     assert response.json()["citations"] == []
+
+
+def test_single_generic_term_overlap_is_not_enough_evidence(client: TestClient, settings: Settings) -> None:
+    create_document(
+        client,
+        settings,
+        "tenant-a",
+        title="差旅报销制度",
+        content="差旅报销材料包括电子发票和审批单。",
+    )
+
+    response = client.post(
+        "/api/rag/query",
+        headers=authorization(settings, "tenant-a", "employee"),
+        json={"question": "海水淡化常用哪些膜材料"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "refused"

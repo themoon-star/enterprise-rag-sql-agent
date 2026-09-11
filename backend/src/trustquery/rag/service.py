@@ -8,6 +8,19 @@ from trustquery.repositories import DocumentRecord, DocumentRepository
 from trustquery.security import TenantContext
 
 SENTENCE_PATTERN = re.compile(r"[^。！？.!?\n]+[。！？.!?]?")
+GENERIC_QUERY_TERMS = {
+    "一个",
+    "一下",
+    "什么",
+    "公司",
+    "可以",
+    "哪些",
+    "如何",
+    "当前",
+    "是否",
+    "进行",
+    "需要",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,7 +74,12 @@ class RagService:
 
         documents = await self.repository.list_accessible(context)
         ranked = rank(normalized_question, [self._search_text(document) for document in documents])
-        accepted = [item for item in ranked if item.score >= self.minimum_score][:top_k]
+        accepted = [
+            item
+            for item in ranked
+            if item.score >= self.minimum_score
+            and self._shared_term_count(normalized_question, documents[item.index]) >= 2
+        ][:top_k]
         if not accepted:
             return RagResult(
                 status="refused",
@@ -85,16 +103,25 @@ class RagService:
     def _search_text(document: DocumentRecord) -> str:
         return f"{document.title}\n{document.content}"
 
+    @classmethod
+    def _shared_term_count(cls, question: str, document: DocumentRecord) -> int:
+        """统计问题与候选证据的独立词元交集，避免单个泛词触发回答。"""
+
+        question_terms = set(tokenize(question)).difference(GENERIC_QUERY_TERMS)
+        document_terms = set(tokenize(cls._search_text(document))).difference(GENERIC_QUERY_TERMS)
+        shared_terms = question_terms.intersection(document_terms)
+        if any(term.isascii() and len(term) >= 3 for term in shared_terms):
+            return max(2, len(shared_terms))
+        return len(shared_terms)
+
     @staticmethod
     def _citation(document: DocumentRecord, score: float, question: str) -> Citation:
-        query_terms = set(tokenize(question))
         sentences = [
             sentence.strip() for sentence in SENTENCE_PATTERN.findall(document.content) if sentence.strip()
         ]
-        excerpt = max(
-            sentences or [document.content],
-            key=lambda sentence: len(query_terms.intersection(tokenize(sentence))),
-        )
+        sentence_ranking = rank(question, sentences)
+        selected = [sentences[item.index] for item in sentence_ranking if item.score > 0][:2]
+        excerpt = "".join(selected or sentences[:1] or [document.content])
         return Citation(
             document_id=document.id,
             title=document.title,

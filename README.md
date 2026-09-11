@@ -2,7 +2,7 @@
 
 面向企业知识问答与数据分析的安全 Agent。项目采用全新 Git 历史和 clean-room 实现，核心目标是把“模型能回答”收敛为可验证的三件事：**只能访问当前租户的数据、每个结论都能追溯、生成 SQL 在执行前后均受约束**。
 
-> 当前状态：M3 可运行产品。评测指标只有在固定数据集与报告落库后才会更新。
+> 当前状态：M4 可复现验收。固定测评包含 100 条 RAG 与 50 条 Text-to-SQL 用例，结果来自确定性离线基线与真实 PostgreSQL，不代表线上模型或客户流量。
 
 ## 一键演示
 
@@ -30,6 +30,8 @@ Python 3.12 · FastAPI · PostgreSQL · SQLAlchemy · SQLGlot · Vue 3 · Docker
 
 - [Clean-room 边界](docs/CLEAN_ROOM.md)
 - [系统架构](docs/ARCHITECTURE.md)
+- [固定测评说明](docs/EVALUATION.md)
+- [最新测评报告](reports/evaluation-v1.md)
 - [实施进度](docs/PROGRESS.md)
 
 ## 许可证

@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 import pytest
 from trustquery.datasources import DatasourceRecord
 from trustquery.sql.executor import QueryExecution, SqlExecutionError
+from trustquery.sql.generator import DeterministicSqlGenerator, SqlGenerationError
 from trustquery.sql.service import TextToSqlService
 from trustquery.sql.validator import ValidatedQuery
 
@@ -114,3 +115,34 @@ async def test_second_execution_failure_exhausts_repair_budget() -> None:
     assert result.decision == "repair_exhausted"
     assert result.execution_attempts == 2
     assert generator.repair_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_deterministic_generator_maps_business_terms_to_tables() -> None:
+    generator = DeterministicSqlGenerator()
+    schema = {
+        "sales_orders": ("id", "total_amount"),
+        "customers": ("id", "name"),
+    }
+
+    order_sql = await generator.generate("目前有多少笔订单？", schema)
+    customer_sql = await generator.generate("客户数量是多少？", schema)
+    total_sql = await generator.generate("订单销售额总额是多少？", schema)
+    average_sql = await generator.generate("平均每笔订单金额是多少？", schema)
+
+    assert "sales_orders" in order_sql
+    assert "customers" in customer_sql
+    assert "SUM" in total_sql
+    assert "AVG" in average_sql
+
+
+@pytest.mark.asyncio
+async def test_deterministic_generator_requires_business_object_when_schema_is_ambiguous() -> None:
+    generator = DeterministicSqlGenerator()
+    schema = {
+        "sales_orders": ("id", "total_amount"),
+        "customers": ("id", "name"),
+    }
+
+    with pytest.raises(SqlGenerationError, match="业务对象"):
+        await generator.generate("当前一共有多少条记录？", schema)
