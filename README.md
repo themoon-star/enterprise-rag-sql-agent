@@ -2,7 +2,17 @@
 
 面向企业知识问答与数据分析的安全 Agent。项目采用全新 Git 历史和 clean-room 实现，核心目标是把“模型能回答”收敛为可验证的三件事：**只能访问当前租户的数据、每个结论都能追溯、生成 SQL 在执行前后均受约束**。
 
-> 当前状态：M0 工程骨架。功能与指标只有在对应测试和报告落库后才会更新为完成。
+> 当前状态：M3 可运行产品。评测指标只有在固定数据集与报告落库后才会更新。
+
+## 一键演示
+
+前置条件：Docker Desktop 与 Docker Compose。
+
+```powershell
+.\scripts\demo.ps1
+```
+
+打开 `http://localhost:3100`。脚本会在被 Git 忽略的 `.env.runtime` 中生成本地随机密钥，构建 4 个隔离服务并写入演示租户数据。使用 `.\scripts\stop-demo.ps1` 停止服务并清理演示数据卷。
 
 ## 计划能力
 
@@ -25,4 +35,3 @@ Python 3.12 · FastAPI · PostgreSQL · SQLAlchemy · SQLGlot · Vue 3 · Docker
 ## 许可证
 
 [MIT](LICENSE)，Copyright © 2026 Zhang Junjie。
-

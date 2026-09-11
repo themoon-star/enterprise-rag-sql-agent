@@ -9,6 +9,7 @@ from trustquery.api import router
 from trustquery.config import Settings, get_settings
 from trustquery.datasources import CredentialCipher
 from trustquery.db import Database
+from trustquery.demo import bootstrap_demo
 from trustquery.sql.executor import PostgresExecutor
 from trustquery.sql.generator import DeterministicSqlGenerator
 
@@ -27,6 +28,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.sql_executor = PostgresExecutor(cipher)
         if resolved_settings.auto_create_schema:
             await database.create_schema()
+        if resolved_settings.demo_mode:
+            async with database.sessions() as session:
+                await bootstrap_demo(session, resolved_settings, cipher)
         yield
         await database.close()
 

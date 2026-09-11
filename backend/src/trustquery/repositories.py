@@ -43,6 +43,7 @@ class DocumentRepository:
 
         if await self.session.get(Tenant, tenant_id) is None:
             self.session.add(Tenant(id=tenant_id, name=tenant_id))
+            await self.session.flush()
 
     async def create(
         self,

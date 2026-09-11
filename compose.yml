@@ -1,0 +1,72 @@
+services:
+  metadata-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: trustquery
+      POSTGRES_USER: trustquery_app
+      POSTGRES_PASSWORD: ${METADATA_PASSWORD:?set METADATA_PASSWORD}
+    volumes:
+      - metadata-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trustquery_app -d trustquery"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  analytics-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: analytics
+      POSTGRES_USER: trustquery_admin
+      POSTGRES_PASSWORD: ${ANALYTICS_ADMIN_PASSWORD:?set ANALYTICS_ADMIN_PASSWORD}
+      READONLY_PASSWORD: ${ANALYTICS_READONLY_PASSWORD:?set ANALYTICS_READONLY_PASSWORD}
+    volumes:
+      - analytics-data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trustquery_admin -d analytics"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      APP_DATABASE_URL: postgresql+asyncpg://trustquery_app:${METADATA_PASSWORD}@metadata-db:5432/trustquery
+      APP_SECRET_KEY: ${APP_SECRET_KEY:?set APP_SECRET_KEY}
+      APP_CREDENTIAL_ENCRYPTION_KEY: ${APP_CREDENTIAL_ENCRYPTION_KEY:?set APP_CREDENTIAL_ENCRYPTION_KEY}
+      APP_DEMO_MODE: "true"
+      APP_DEMO_DATASOURCE_URL: postgresql://trustquery_reader:${ANALYTICS_READONLY_PASSWORD}@analytics-db:5432/analytics
+    ports:
+      - "${API_PORT:-8100}:8000"
+    depends_on:
+      metadata-db:
+        condition: service_healthy
+      analytics-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "${WEB_PORT:-3100}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  metadata-data:
+  analytics-data:

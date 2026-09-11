@@ -105,3 +105,13 @@ class SqlQueryOutput(BaseModel):
     columns: list[str]
     rows: list[dict[str, Any]]
     decision: str
+
+
+class DemoSessionOutput(BaseModel):
+    """仅在演示模式签发的可信会话。"""
+
+    access_token: str
+    token_type: Literal["bearer"] = "bearer"  # noqa: S105 - OAuth token type, not a credential
+    tenant_name: str
+    user_name: str
+    roles: list[str]

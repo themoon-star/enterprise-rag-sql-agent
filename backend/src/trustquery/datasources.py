@@ -100,6 +100,7 @@ class DatasourceRepository:
 
         if await self.session.get(Tenant, context.tenant_id) is None:
             self.session.add(Tenant(id=context.tenant_id, name=context.tenant_id))
+            await self.session.flush()
 
         datasource = Datasource(
             tenant_id=context.tenant_id,

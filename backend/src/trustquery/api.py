@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from trustquery.datasources import CredentialCipher, DatasourceRecord, DatasourceRepository
@@ -12,6 +12,7 @@ from trustquery.repositories import DocumentRecord, DocumentRepository
 from trustquery.schemas import (
     DatasourceCreate,
     DatasourceOutput,
+    DemoSessionOutput,
     DocumentCreate,
     DocumentOutput,
     RagQueryInput,
@@ -19,7 +20,7 @@ from trustquery.schemas import (
     SqlQueryInput,
     SqlQueryOutput,
 )
-from trustquery.security import TenantContext, get_tenant_context, require_roles
+from trustquery.security import TenantContext, create_access_token, get_tenant_context, require_roles
 from trustquery.sql.service import TextToSqlService
 
 router = APIRouter(prefix="/api")
@@ -59,6 +60,17 @@ async def create_document(
 
     document = await DocumentRepository(session).create(context, **payload.model_dump())
     return _document_output(document)
+
+
+@router.get("/documents", response_model=list[DocumentOutput])
+async def list_documents(
+    context: Annotated[TenantContext, Depends(get_tenant_context)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> list[DocumentOutput]:
+    """列出当前租户与角色可访问的知识文档。"""
+
+    documents = await DocumentRepository(session).list_accessible(context)
+    return [_document_output(document) for document in documents]
 
 
 @router.get("/documents/{document_id}", response_model=DocumentOutput)
@@ -137,3 +149,26 @@ async def query_datasource(
         executor=session.info["sql_executor"],
     ).query(datasource, payload.question)
     return SqlQueryOutput.model_validate(result, from_attributes=True)
+
+
+@router.post("/demo/session", response_model=DemoSessionOutput)
+async def create_demo_session(request: Request) -> DemoSessionOutput:
+    """仅在显式演示模式下签发固定租户的短期会话。"""
+
+    settings = request.app.state.settings
+    if not settings.demo_mode:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="演示模式未启用")
+
+    roles = {"admin", "analyst", "employee"}
+    token = create_access_token(
+        settings,
+        tenant_id="acme-demo",
+        user_id="demo-admin",
+        roles=roles,
+    )
+    return DemoSessionOutput(
+        access_token=token,
+        tenant_name="Acme 华东事业部",
+        user_name="演示管理员",
+        roles=sorted(roles),
+    )
