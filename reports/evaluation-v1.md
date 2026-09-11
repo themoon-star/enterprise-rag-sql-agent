@@ -1,6 +1,6 @@
 # TrustQuery fixed evaluation v1
 
-Run at: 2026-09-11T08:43:50.230249+00:00
+Run at: 2026-09-11T09:06:08.875955+00:00
 Dataset manifest: `0e02312fcfb0758fb72764bff1775d9c9ab9fa6c7f75bdf86f8bd479e6c1bca5`
 Mode: deterministic offline baseline + real PostgreSQL execution
 

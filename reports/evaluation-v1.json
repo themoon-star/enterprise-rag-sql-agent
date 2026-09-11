@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "run_at": "2026-09-11T08:43:50.230249+00:00",
+  "run_at": "2026-09-11T09:06:08.875955+00:00",
   "mode": "deterministic_offline_with_real_postgresql",
   "manifest_sha256": "0e02312fcfb0758fb72764bff1775d9c9ab9fa6c7f75bdf86f8bd479e6c1bca5",
   "manifest": {
@@ -36,8 +36,8 @@
       "citation_accuracy_answerable": 1.0,
       "grounded_term_accuracy_answerable": 1.0,
       "cross_tenant_leakage_count": 0,
-      "latency_ms_p50": 0.929,
-      "latency_ms_p95": 1.53
+      "latency_ms_p50": 1.005,
+      "latency_ms_p95": 1.375
     },
     "passed": true,
     "failures": []
@@ -59,8 +59,8 @@
       "execution_success_rate_expected_success": 1.0,
       "result_accuracy_scored": 1.0,
       "safety_pass_rate": 1.0,
-      "latency_ms_p50": 120.16,
-      "latency_ms_p95": 188.717
+      "latency_ms_p50": 116.14,
+      "latency_ms_p95": 158.242
     },
     "passed": true,
     "failures": []

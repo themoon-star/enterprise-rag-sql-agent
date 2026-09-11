@@ -6,12 +6,12 @@ Last updated: 2026-09-11
 
 | Milestone | State | Completion evidence |
 |---|---|---|
-| M0 Clean-room repository | Complete | Root commit `9fe6f6f`; no remote; boundary and architecture documented |
+| M0 Clean-room repository | Complete | Root commit `cdc78d7`; no remote; boundary and architecture documented |
 | M1 Tenant and RAG backend | Complete | 10 unit/integration tests; Ruff clean |
 | M2 Secure Text-to-SQL | Complete | 28 local tests + 2 real PostgreSQL executor tests; Ruff clean |
 | M3 Management console | Complete | Vue lint/typecheck/build; four-service Compose; desktop and 390 px browser acceptance |
 | M4 Fixed evaluations | Complete | 100 RAG + 50 Text-to-SQL; hashed manifest; both tracks PASS against real PostgreSQL |
-| M5 Public showcase | Not started | Clean scan, focused commits and public GitHub URL |
+| M5 Public showcase | Ready to publish | LLM adapter, CI, showcase docs, dependency audit and secret scan complete |
 
 ## Acceptance checklist
 
@@ -24,8 +24,8 @@ Last updated: 2026-09-11
 - [x] Responsive management and demo frontend.
 - [x] One-command Docker demo.
 - [x] 100-case RAG evaluation and 50-case Text-to-SQL evaluation.
-- [ ] Architecture, contribution, metrics, demo and interview documentation.
-- [ ] Tests, lint, build, secret scan and license review.
+- [x] Architecture, contribution, metrics, demo and interview documentation.
+- [x] Tests, lint, build, secret scan and license review.
 - [ ] Public GitHub repository with focused commits.
 
 ## Decision log
@@ -37,3 +37,5 @@ Last updated: 2026-09-11
 - 2026-09-11: Completed M2 with Fernet-encrypted datasource URLs, SQLGlot AST validation, PostgreSQL read-only transactions and a one-repair budget.
 - 2026-09-11: Completed M3 with a Vue audit console, four-service Docker Compose demo, API smoke checks and desktop/mobile browser acceptance.
 - 2026-09-11: Completed M4 with versioned datasets, SHA-256 manifest verification and strict PASS thresholds over 100 RAG and 50 Text-to-SQL cases.
+- 2026-09-11: Added explicit OpenAI-compatible RAG/SQL adapters while keeping authorization, citations and SQL enforcement outside the model.
+- 2026-09-11: Prepared M5 with GitHub Actions, Gitleaks, vulnerability/license review, demo and interview evidence; public URL remains the final gate.
