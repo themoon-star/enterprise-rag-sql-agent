@@ -6,12 +6,12 @@ Last updated: 2026-09-11
 
 | Milestone | State | Completion evidence |
 |---|---|---|
-| M0 Clean-room repository | Complete | Root commit `cdc78d7`; no remote; boundary and architecture documented |
+| M0 Clean-room repository | Complete | Root commit `cdc78d7`; independent history, boundary and architecture documented |
 | M1 Tenant and RAG backend | Complete | 10 unit/integration tests; Ruff clean |
 | M2 Secure Text-to-SQL | Complete | 28 local tests + 2 real PostgreSQL executor tests; Ruff clean |
 | M3 Management console | Complete | Vue lint/typecheck/build; four-service Compose; desktop and 390 px browser acceptance |
 | M4 Fixed evaluations | Complete | 100 RAG + 50 Text-to-SQL; hashed manifest; both tracks PASS against real PostgreSQL |
-| M5 Public showcase | Ready to publish | LLM adapter, CI, showcase docs, dependency audit and secret scan complete |
+| M5 Public showcase | Complete | Public repository: `themoon-star/enterprise-rag-sql-agent`; CI and evidence published |
 
 ## Acceptance checklist
 
@@ -26,7 +26,7 @@ Last updated: 2026-09-11
 - [x] 100-case RAG evaluation and 50-case Text-to-SQL evaluation.
 - [x] Architecture, contribution, metrics, demo and interview documentation.
 - [x] Tests, lint, build, secret scan and license review.
-- [ ] Public GitHub repository with focused commits.
+- [x] Public GitHub repository with focused commits.
 
 ## Decision log
 
@@ -39,3 +39,4 @@ Last updated: 2026-09-11
 - 2026-09-11: Completed M4 with versioned datasets, SHA-256 manifest verification and strict PASS thresholds over 100 RAG and 50 Text-to-SQL cases.
 - 2026-09-11: Added explicit OpenAI-compatible RAG/SQL adapters while keeping authorization, citations and SQL enforcement outside the model.
 - 2026-09-11: Prepared M5 with GitHub Actions, Gitleaks, vulnerability/license review, demo and interview evidence; public URL remains the final gate.
+- 2026-09-11: Completed M5 by publishing the independent repository at `https://github.com/themoon-star/enterprise-rag-sql-agent`.
